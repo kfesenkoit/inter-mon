@@ -1,0 +1,67 @@
+// Meeting 01 homework starter config.
+// Goal: students complete metrics + logs collection pipelines in Alloy.
+
+local.file "endpoints" {
+  filename = "/etc/alloy/endpoints.json"
+}
+
+livedebugging {
+  enabled = false
+}
+
+// Remote write destination for Prometheus metrics.
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = json_path(local.file.endpoints.content, ".metrics.url")[0]
+  }
+}
+
+// Loki write destination for logs.
+loki.write "loki" {
+  endpoint {
+    url = json_path(local.file.endpoints.content, ".logs.url")[0]
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TODO 1: Metrics scraping via Alloy
+//
+// Add a prometheus.scrape component for nginx-exporter:9113 and forward to:
+//   [prometheus.remote_write.mimir.receiver]
+//
+// Note: if you set scrape_interval below 10s, also set scrape_timeout to a
+// smaller value (for example interval 5s, timeout 4s).
+//
+// Optional: also scrape Alloy itself on localhost:12345.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// TODO 2: Logs scraping via Alloy
+//
+// 1) Add local.file_match with targets for:
+//    - /var/log/nginx/access-file.log
+//    - /var/log/nginx/error-file.log
+//
+// 2) Add loki.source.file that tails those files.
+//
+// 3) Add loki.process to parse access logs and extract labels:
+//    - method
+//    - uri
+//    - status
+//
+// 4) Forward processed logs to:
+//    [loki.write.loki.receiver]
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// BONUS TODO: Logs -> Metrics in Alloy
+//
+// Inside loki.process, add a stage.metrics block to create counters from logs,
+// for example:
+//   - total nginx requests
+//   - nginx 5xx requests
+//
+// Those metrics are exposed on Alloy's /metrics endpoint. If Alloy is scraped
+// and remote-written to Mimir, these become Prometheus-compatible metrics that
+// can be queried from Grafana using the Mimir datasource.
+// ---------------------------------------------------------------------------
