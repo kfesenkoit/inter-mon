@@ -1,0 +1,67 @@
+// Meeting 02 homework starter config.
+// Goal: generate RED metrics from traces at Alloy level, then push to Mimir.
+
+local.file "endpoints" {
+  filename = "/etc/alloy/endpoints.json"
+}
+
+livedebugging {
+  enabled = false
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = json_path(local.file.endpoints.content, ".metrics.url")[0]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = json_path(local.file.endpoints.content, ".traces.endpoint")[0]
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TODO 1: Receive traces in Alloy
+//
+// Add otelcol.receiver.otlp with grpc/http receivers.
+// Route traces to:
+// - otelcol.connector.spanmetrics.red.input
+// - otelcol.processor.batch.traces.input
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// TODO 2: Forward raw traces to Tempo
+//
+// Add otelcol.processor.batch "traces" and forward traces to:
+// - otelcol.exporter.otlp.tempo.input
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// TODO 3: Generate RED metrics from traces
+//
+// Add otelcol.connector.spanmetrics "red" with:
+// - namespace from endpoints.json (spanmetrics_namespace)
+// - dimensions at least:
+//   * http.method
+//   * http.route
+//   * http.status_code
+// - histogram block
+//
+// Output generated metrics to:
+// - otelcol.processor.transform.metric_rename.input
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// TODO 4: Rename metrics to Tempo-like names and export to Mimir
+//
+// Add transform mapping:
+// - traces.spanmetrics.duration -> traces.spanmetrics.latency
+// - traces.spanmetrics.calls -> traces.spanmetrics.calls.total
+//
+// Then add otelcol.exporter.prometheus and forward to:
+// - prometheus.remote_write.mimir.receiver
+// ---------------------------------------------------------------------------

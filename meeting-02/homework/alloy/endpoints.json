@@ -1,0 +1,10 @@
+{
+  "metrics": {
+    "url": "http://mimir:9009/api/v1/push"
+  },
+  "traces": {
+    "endpoint": "tempo:4317"
+  },
+  "spanmetrics_namespace": "traces.spanmetrics",
+  "add_spanmetric_suffixes": false
+}
